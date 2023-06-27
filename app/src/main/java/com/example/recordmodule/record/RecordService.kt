@@ -14,6 +14,8 @@ import android.os.IBinder
 import android.util.Log
 import androidx.core.app.NotificationCompat
 import com.example.recordmodule.R
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
 import java.io.File
 
 private const val TAG = "RecordService"
@@ -47,7 +49,6 @@ class RecordService : Service() {
     // AudioRecord
     private val bufferSize = AudioRecord.getMinBufferSize(SAMPLE_RATE, CHANNEL_CONFIG, AUDIO_FORMAT)
     private lateinit var audioRecord: AudioRecord
-    private var recordingThread: Thread? = null
 
     // MediaCodec 및 MediaMuxer 객체 선언
     private lateinit var codec: MediaCodec
@@ -190,10 +191,9 @@ class RecordService : Service() {
         isTempRecording = true
 
         audioRecord.startRecording()
-        recordingThread = Thread {
+        GlobalScope.launch {
             writeAudioDataToFile()
         }
-        recordingThread?.start()
     }
 
     // 녹취 종료
@@ -204,7 +204,6 @@ class RecordService : Service() {
             isPaused = false
 
             audioRecord.stop()
-            recordingThread?.join()
 
             // MediaCodec 및 MediaMuxer 해제
             codec.stop()
