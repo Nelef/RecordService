@@ -71,6 +71,9 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Popup
 import com.example.recordmodule.R
 import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
+import java.util.TimeZone
 import java.util.Timer
 import kotlin.concurrent.timer
 import kotlin.math.roundToInt
@@ -718,7 +721,7 @@ fun PlayerBubble(
                     isLooping = false   //반복 재생x
                 }
 
-                timerTask = timer(period = 500) {
+                timerTask = timer(period = 1000) {
                     currentPosition = mediaPlayer.currentPosition
                 }
 
@@ -766,10 +769,14 @@ fun PlayerBubble(
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
-                    text = "${SimpleDateFormat(" mm : ss ").format(currentPosition)} / ${
-                        SimpleDateFormat(
-                            " mm : ss "
-                        ).format(recordData.recordLength)
+                    text = "${
+                        SimpleDateFormat(" mm : ss ", Locale.getDefault())
+                            .apply { timeZone = TimeZone.getTimeZone("UTC") }
+                            .format(Date(currentPosition.toLong()))
+                    } / ${
+                        SimpleDateFormat(" mm : ss ", Locale.getDefault())
+                            .apply { timeZone = TimeZone.getTimeZone("UTC") }
+                            .format(Date(recordData.recordLength))
                     }",
                     style = TextStyle(
                         color = MaterialTheme.colors.background1Color,
@@ -788,8 +795,10 @@ fun PlayerBubble(
                             mediaPlayer.start()
                         }
                     },
-                    icon = if (mediaPlayer.isPlaying) R.drawable.micon_pause_on else R.drawable.micon_play,
-                    selectedIcon = if (mediaPlayer.isPlaying) R.drawable.micon_pause_on else R.drawable.micon_play,
+                    icon =
+                    if (mediaPlayer.isPlaying) R.drawable.micon_pause_on else R.drawable.micon_play,
+                    selectedIcon =
+                    if (mediaPlayer.isPlaying) R.drawable.micon_pause_on else R.drawable.micon_play,
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 BubbleButton(

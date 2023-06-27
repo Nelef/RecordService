@@ -61,7 +61,6 @@ class RecordService : Service() {
     private var isTempRecording = false
 
     // timer
-    val frameDurationUs: Long = 1_000_000 // 1초를 마이크로초로 변환
     var presentationTimeUs: Long = 0
 
     @SuppressLint("MissingPermission")
@@ -261,6 +260,7 @@ class RecordService : Service() {
     private fun writeAudioDataToFile() {
         val audioData = ByteArray(bufferSize)
         while (isRecording) {
+            bufferInfo.presentationTimeUs = presentationTimeUs
             val numberOfBytes = audioRecord.read(audioData, 0, bufferSize)
             if (numberOfBytes != AudioRecord.ERROR_INVALID_OPERATION) {
                 val inputBufferId = codec.dequeueInputBuffer(-1)
@@ -268,7 +268,7 @@ class RecordService : Service() {
                     val inputBuffer = codec.getInputBuffer(inputBufferId)
                     inputBuffer?.clear()
                     inputBuffer?.put(audioData)
-                    codec.queueInputBuffer(inputBufferId, 0, numberOfBytes, 0, 0)
+                    codec.queueInputBuffer(inputBufferId, 0, numberOfBytes, presentationTimeUs, 0)
                 }
 
                 var outputBufferId = codec.dequeueOutputBuffer(bufferInfo, 0)
@@ -277,7 +277,6 @@ class RecordService : Service() {
                     val encodedData = ByteArray(bufferInfo.size)
                     outputBuffer?.get(encodedData)
                     outputBuffer?.clear() // 이전 데이터는 중복되니 삭제 후 새 정보만 기록
-                    bufferInfo.presentationTimeUs = presentationTimeUs
                     mediaMuxer.writeSampleData(audioTrackIndex, outputBuffer!!, bufferInfo)
                     if (isTempRecording)
                         mediaMuxer2.writeSampleData(audioTrackIndex, outputBuffer!!, bufferInfo)

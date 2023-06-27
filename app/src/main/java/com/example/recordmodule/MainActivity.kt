@@ -150,6 +150,7 @@ class MainActivity : ComponentActivity() {
     val recordList: List<RecordData> = _recordList
 
     fun generateRecordFilePath(isTemp: Boolean): String {
+        selectedRecordCode = "record"
         return if (!isTemp) File(this.filesDir, "record/test_001.mp3").absolutePath
         else File(this.filesDir, "temp/test_001.mp3").absolutePath
     }
@@ -177,7 +178,7 @@ class MainActivity : ComponentActivity() {
                 )
 
                 RecordData(
-                    "name",
+                    "녹취",
                     recordFile.absolutePath,
                     recordFile.name,
                     recordFile.length(),
@@ -186,7 +187,7 @@ class MainActivity : ComponentActivity() {
             }
 
             if (records.isNotEmpty()) {
-                this["code"] = records
+                this["record"] = records
             }
         }
 
