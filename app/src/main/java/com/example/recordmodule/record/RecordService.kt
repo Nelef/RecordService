@@ -86,6 +86,7 @@ class RecordService : Service() {
         codec.start()
 
         // MediaMuxer 초기화
+        RecordFileUtils.delete(filePath)
         RecordFileUtils.mkdir(filePath)
         outputFile = File(filePath)
         mediaMuxer =
@@ -94,6 +95,7 @@ class RecordService : Service() {
         mediaMuxer.start()
 
         // TEMP MediaMuxer 초기화
+        RecordFileUtils.delete(fileTempPath)
         RecordFileUtils.mkdir(fileTempPath)
         outputFile = File(fileTempPath)
         mediaMuxer2 =

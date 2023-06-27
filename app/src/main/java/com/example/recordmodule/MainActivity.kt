@@ -35,7 +35,10 @@ private const val TAG = "MainActivity"
 
 class MainActivity : ComponentActivity() {
 
-    private val PERMISSIONS = arrayOf(Manifest.permission.RECORD_AUDIO)
+    private val PERMISSIONS = arrayOf(
+        Manifest.permission.RECORD_AUDIO,
+        Manifest.permission.WRITE_EXTERNAL_STORAGE
+    )
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -151,8 +154,8 @@ class MainActivity : ComponentActivity() {
 
     fun generateRecordFilePath(isTemp: Boolean): String {
         selectedRecordCode = "record"
-        return if (!isTemp) File(this.filesDir, "record/test_001.mp3").absolutePath
-        else File(this.filesDir, "temp/test_001.mp3").absolutePath
+        return if (!isTemp) File(getExternalFilesDir(null), "record/test_001.mp3").absolutePath
+        else File(getExternalFilesDir(null), "temp/test_001.mp3").absolutePath
     }
 
     fun updateRecordList() {
@@ -161,7 +164,7 @@ class MainActivity : ComponentActivity() {
         records.apply {
             clear()
 
-            val recordFiles = File(baseContext.filesDir, "record").listFiles { _, name ->
+            val recordFiles = File(getExternalFilesDir(null), "record").listFiles { _, name ->
                 name.endsWith(".mp3")
             } ?: emptyArray()
 
