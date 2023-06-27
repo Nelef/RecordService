@@ -15,6 +15,7 @@ import android.util.Log
 import androidx.core.app.NotificationCompat
 import com.example.recordmodule.R
 import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import java.io.File
 
@@ -49,6 +50,7 @@ class RecordService : Service() {
     // AudioRecord
     private val bufferSize = AudioRecord.getMinBufferSize(SAMPLE_RATE, CHANNEL_CONFIG, AUDIO_FORMAT)
     private lateinit var audioRecord: AudioRecord
+    private lateinit var writeAudioDataToFileJob: Job
 
     // MediaCodec 및 MediaMuxer 객체 선언
     private lateinit var codec: MediaCodec
@@ -193,7 +195,7 @@ class RecordService : Service() {
         isTempRecording = true
 
         audioRecord.startRecording()
-        GlobalScope.launch {
+        writeAudioDataToFileJob = GlobalScope.launch {
             writeAudioDataToFile()
         }
     }
@@ -207,15 +209,18 @@ class RecordService : Service() {
 
             audioRecord.stop()
 
-            // MediaCodec 및 MediaMuxer 해제
-            codec.stop()
-            codec.release()
-            mediaMuxer.stop()
-            mediaMuxer.release()
+            // 코루틴 작업이 정상 종료되면 stop 호출.
+            writeAudioDataToFileJob.invokeOnCompletion {
+                // MediaCodec 및 MediaMuxer 해제
+                codec.stop()
+                codec.release()
+                mediaMuxer.stop()
+                mediaMuxer.release()
 
-            // Temp MediaMuxer 해제
-            mediaMuxer2.stop()
-            mediaMuxer2.release()
+                // Temp MediaMuxer 해제
+                mediaMuxer2.stop()
+                mediaMuxer2.release()
+            }
         }
     }
 
