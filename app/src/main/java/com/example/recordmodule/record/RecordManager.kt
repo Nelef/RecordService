@@ -144,12 +144,12 @@ class RecordManager(IntentClass: Class<*>) : Record {
     @OptIn(DelicateCoroutinesApi::class)
     private fun timerStart() = GlobalScope.launch(Dispatchers.IO) {
         // 타이머 실행
-        timerTask = timer(period = 1) { // 0.001초 마다 업데이트
+        timerTask = timer(period = 100) { // 0.1초 마다 업데이트
             seconds++
-            recordService?.apply { presentationTimeUs += 1000 }
+            recordService?.apply { presentationTimeUs += 100000 }
 
-            val formattedSeconds = (seconds / 1000 % 60).toString().padStart(2, '0')
-            val formattedMinutes = (seconds / 1000 / 60).toString().padStart(2, '0')
+            val formattedSeconds = (seconds / 10 % 60).toString().padStart(2, '0')
+            val formattedMinutes = (seconds / 10 / 60).toString().padStart(2, '0')
 
             _recordTime.value = "$formattedMinutes : $formattedSeconds"
         }

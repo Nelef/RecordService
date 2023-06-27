@@ -61,14 +61,13 @@ class RecordService : Service() {
     private var isTempRecording = false
 
     // timer
-    var presentationTimeUs: Long = 0
+    var presentationTimeUs = 0L
 
     @SuppressLint("MissingPermission")
     override fun onBind(intent: Intent): IBinder {
         filePath = intent.getStringExtra(INTENT_PATH) ?: ""
         fileTempPath = intent.getStringExtra(INTENT_TEMP_PATH) ?: ""
 
-        // 테스트............
         audioRecord = AudioRecord(
             MediaRecorder.AudioSource.MIC,
             SAMPLE_RATE,
@@ -259,6 +258,11 @@ class RecordService : Service() {
 
     private fun writeAudioDataToFile() {
         val audioData = ByteArray(bufferSize)
+
+        // 타임스탬프 에러 확인 용 변수
+        var isErrorTimeStamp = false
+        var preTimeStamp = 0L
+
         while (isRecording) {
             val numberOfBytes = audioRecord.read(audioData, 0, bufferSize)
             if (numberOfBytes != AudioRecord.ERROR_INVALID_OPERATION) {
@@ -272,11 +276,21 @@ class RecordService : Service() {
 
                 var outputBufferId = codec.dequeueOutputBuffer(bufferInfo, 0)
                 while (outputBufferId >= 0) {
+
+                    // 타임스탬프 에러나는지 확인
+                    if (!isErrorTimeStamp) {
+                        if (preTimeStamp > bufferInfo.presentationTimeUs) {
+                            isErrorTimeStamp = true
+                        }
+                        preTimeStamp = bufferInfo.presentationTimeUs
+                    }
+                    // 타임스탬프 에러날 때 직접 타임스탬프 작성.
+                    if (isErrorTimeStamp) bufferInfo.presentationTimeUs = presentationTimeUs
+
                     val outputBuffer = codec.getOutputBuffer(outputBufferId)
                     val encodedData = ByteArray(bufferInfo.size)
                     outputBuffer?.get(encodedData)
                     outputBuffer?.clear() // 이전 데이터는 중복되니 삭제 후 새 정보만 기록
-                    bufferInfo.presentationTimeUs = presentationTimeUs
                     mediaMuxer.writeSampleData(audioTrackIndex, outputBuffer!!, bufferInfo)
                     if (isTempRecording)
                         mediaMuxer2.writeSampleData(audioTrackIndex, outputBuffer!!, bufferInfo)
