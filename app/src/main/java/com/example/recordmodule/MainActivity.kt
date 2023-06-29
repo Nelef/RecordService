@@ -50,10 +50,24 @@ class MainActivity : ComponentActivity() {
                 Surface(
                     modifier = Modifier.fillMaxSize()
                 ) {
-                    RecordButtons(
-                        recordStart = { recordStart() },
-                        recordStop = { recordCancel() }
-                    )
+                    Column(
+                        modifier = Modifier.fillMaxSize(),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Center
+                    ) {
+                        Button(onClick = { recordStart() }) {
+                            Text(text = "녹취 서비스 시작")
+                        }
+                        Button(onClick = { recordCancel() }) {
+                            Text(text = "녹취 서비스 종료")
+                        }
+                        Button(onClick = {
+                            recordTempSave()
+                            recordTempReStart()
+                        }) {
+                            Text(text = "녹취 임시저장")
+                        }
+                    }
 
                     FloatingRecordButton(
                         showFloatingRecordButton = record.showFloatingRecordButton,
@@ -128,13 +142,13 @@ class MainActivity : ComponentActivity() {
 
     fun recordTempSave() {
         if (record.recordTempSave()) {
-//            Toast.makeText(this, "녹취 임시저장이 완료되었습니다.", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, "녹취 임시저장이 완료되었습니다.", Toast.LENGTH_SHORT).show()
         }
     }
 
     fun recordTempReStart() {
         if (record.recordTempReStart()) {
-//            Toast.makeText(this, "녹취 임시저장이 재시작되었습니다.", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, "녹취 임시저장이 재시작되었습니다.", Toast.LENGTH_SHORT).show()
         }
     }
 
@@ -154,8 +168,8 @@ class MainActivity : ComponentActivity() {
 
     fun generateRecordFilePath(isTemp: Boolean): String {
         selectedRecordCode = "record"
-        return if (!isTemp) File(getExternalFilesDir(null), "record/test_001.mp3").absolutePath
-        else File(getExternalFilesDir(null), "temp/test_001.mp3").absolutePath
+        return if (!isTemp) File(getExternalFilesDir(null), "record/test_0_01.mp3").absolutePath
+        else File(getExternalFilesDir(null), "temp/test_0_01.mp3").absolutePath
     }
 
     fun updateRecordList() {
@@ -200,29 +214,5 @@ class MainActivity : ComponentActivity() {
                 addAll(it)
             }
         }
-    }
-}
-
-@Composable
-fun RecordButtons(recordStart: () -> Unit, recordStop: () -> Unit) {
-    Column(
-        modifier = Modifier.fillMaxSize(),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
-    ) {
-        Button(onClick = { recordStart() }) {
-            Text(text = "녹취 서비스 시작")
-        }
-        Button(onClick = { recordStop() }) {
-            Text(text = "녹취 서비스 종료")
-        }
-    }
-}
-
-@Preview(showBackground = true)
-@Composable
-fun GreetingPreview() {
-    RecordModuleTheme {
-        RecordButtons({}, {})
     }
 }
