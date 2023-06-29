@@ -61,6 +61,7 @@ class RecordService : Service() {
 
     // 임시저장
     private lateinit var mediaMuxer2: MediaMuxer
+    private lateinit var backupFormat: MediaFormat
     private var isTempRecording = false
 
     // timer
@@ -97,12 +98,13 @@ class RecordService : Service() {
         mediaMuxer.start()
 
         // TEMP MediaMuxer 초기화
+        backupFormat = codec.outputFormat // 설정 값 백업
         RecordFileUtils.delete(fileTempPath)
         RecordFileUtils.mkdir(fileTempPath)
         outputFile = File(fileTempPath)
         mediaMuxer2 =
             MediaMuxer(outputFile!!.absolutePath, MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4)
-        audioTrackIndex = mediaMuxer2.addTrack(codec.outputFormat)
+        audioTrackIndex = mediaMuxer2.addTrack(backupFormat)
         mediaMuxer2.start()
 
         return binder
@@ -243,7 +245,7 @@ class RecordService : Service() {
             outputFile = File(fileTempPath)
             mediaMuxer2 =
                 MediaMuxer(outputFile!!.absolutePath, MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4)
-            audioTrackIndex = mediaMuxer2.addTrack(codec.outputFormat)
+            audioTrackIndex = mediaMuxer2.addTrack(backupFormat)
             mediaMuxer2.start()
             isTempRecording = true
             true
