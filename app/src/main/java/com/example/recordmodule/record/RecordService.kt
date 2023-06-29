@@ -61,7 +61,7 @@ class RecordService : Service() {
 
     // 임시저장
     private lateinit var mediaMuxer2: MediaMuxer
-    private lateinit var backupFormat: MediaFormat
+    private lateinit var backupFormat: MediaFormat // 안드로이드 7.1.1 이하
     private var isTempRecording = false
 
     // timer
@@ -89,25 +89,36 @@ class RecordService : Service() {
         codec.start()
 
         // MediaMuxer 초기화
-        RecordFileUtils.delete(filePath)
-        RecordFileUtils.mkdir(filePath)
-        outputFile = File(filePath)
-        mediaMuxer =
-            MediaMuxer(outputFile!!.absolutePath, MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4)
-        audioTrackIndex = mediaMuxer.addTrack(codec.outputFormat)
+        mediaMuxer = initMediaMuxer(filePath = filePath, isTemp = false)
         mediaMuxer.start()
 
+        // 오리지널 설정 값 백업 (안드로이드 7.1.1 이하 문제 해결)
+        backupFormat = codec.outputFormat
+
         // TEMP MediaMuxer 초기화
-        backupFormat = codec.outputFormat // 설정 값 백업
-        RecordFileUtils.delete(fileTempPath)
-        RecordFileUtils.mkdir(fileTempPath)
-        outputFile = File(fileTempPath)
-        mediaMuxer2 =
-            MediaMuxer(outputFile!!.absolutePath, MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4)
-        audioTrackIndex = mediaMuxer2.addTrack(backupFormat)
+        mediaMuxer2 = initMediaMuxer(filePath = fileTempPath, isTemp = true)
         mediaMuxer2.start()
 
         return binder
+    }
+
+    private fun initMediaMuxer(filePath: String, isTemp: Boolean): MediaMuxer {
+        RecordFileUtils.delete(filePath)
+        RecordFileUtils.mkdir(filePath)
+        outputFile = File(filePath)
+        val mediaMuxer = MediaMuxer(
+            outputFile!!.absolutePath, MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4
+        )
+        // 안드로이드 버전에 따른 임시저장 시 오류 발생하므로 분기
+        // (7.1.1 이하 헤더 128bytes 제한으로 backupFormat으로 가능. 13의 경우 originalFormat으로만 가능.)
+        audioTrackIndex = mediaMuxer.addTrack(
+            if (isTemp) {
+                if (Build.VERSION.SDK_INT < 28) backupFormat
+                else codec.outputFormat
+            } else
+                codec.outputFormat
+        )
+        return mediaMuxer
     }
 
     override fun onRebind(intent: Intent?) {
@@ -240,12 +251,10 @@ class RecordService : Service() {
 
     fun reStartTempRecording(): Boolean {
         return if (isRecording && !isTempRecording) {
-            // 다시 시작
+            // 파일 이름 올린 뒤 다시 시작
             fileTempPath = increaseFileName(fileTempPath)
-            outputFile = File(fileTempPath)
-            mediaMuxer2 =
-                MediaMuxer(outputFile!!.absolutePath, MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4)
-            audioTrackIndex = mediaMuxer2.addTrack(backupFormat)
+            // TEMP MediaMuxer 초기화
+            mediaMuxer2 = initMediaMuxer(filePath = fileTempPath, isTemp = true)
             mediaMuxer2.start()
             isTempRecording = true
             true
