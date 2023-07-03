@@ -1,6 +1,7 @@
 package com.example.recordmodule
 
 import android.Manifest
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.media.MediaMetadataRetriever
 import android.os.Build
@@ -105,7 +106,7 @@ class MainActivity : ComponentActivity() {
     }
 
     // 녹취
-    var record = RecordManager(MainActivity::class.java)
+    var record = RecordManager(Intent(this, MainActivity::class.java))
 
     fun recordStart() {
         updateRecordList()

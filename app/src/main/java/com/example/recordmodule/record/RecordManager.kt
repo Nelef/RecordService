@@ -19,7 +19,7 @@ import kotlin.concurrent.timer
 
 private const val TAG = "RecordManager"
 
-class RecordManager(IntentClass: Class<*>) : Record {
+class RecordManager(IntentNoti: Intent) : Record {
     // bindService
     private var recordService: RecordService? = null
     private val serviceConnection = object : ServiceConnection {
@@ -27,7 +27,7 @@ class RecordManager(IntentClass: Class<*>) : Record {
             Log.i(TAG, "연결")
             this?.run {
                 val b = service as RecordService.RecordServiceBinder
-                recordService = b.getService(IntentClass).apply {
+                recordService = b.getService(IntentNoti).apply {
                     startRecording()
                 }
                 timerStart()

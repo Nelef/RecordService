@@ -42,7 +42,7 @@ class RecordService : Service() {
 
     // bindService 설정
     private val binder = RecordServiceBinder()
-    private lateinit var intentClass: Class<*>
+    private lateinit var intentNoti: Intent
 
     private lateinit var filePath: String
     private lateinit var fileTempPath: String // 임시저장
@@ -128,8 +128,8 @@ class RecordService : Service() {
     }
 
     inner class RecordServiceBinder : Binder() {
-        fun getService(intentClass_: Class<*>): RecordService {
-            intentClass = intentClass_
+        fun getService(intentNoti_: Intent): RecordService {
+            intentNoti = intentNoti_
             createNotification()
             return this@RecordService
         }
@@ -158,7 +158,7 @@ class RecordService : Service() {
         builder.setContentTitle("IBKS 녹취 중")
         builder.setContentText("IBKS 녹취 중입니다.")
         builder.color = Color.RED
-        val notificationIntent = Intent(this, intentClass)
+        val notificationIntent = intentNoti
         notificationIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP)
 
         // API 31 부터 pendingIntent에 FLAG 설정 필수
