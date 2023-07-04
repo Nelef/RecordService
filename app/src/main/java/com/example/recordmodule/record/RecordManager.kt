@@ -85,7 +85,7 @@ class RecordManager(IntentNoti: Intent) : Record {
             context.unbindService(serviceConnection)
 
             timerTask?.cancel()
-            seconds = 0
+            timeIncrement = 0
             _recordTime.value = "00:00"
 
             _recordState.value = RecordState.None
@@ -97,7 +97,8 @@ class RecordManager(IntentNoti: Intent) : Record {
 
     override fun recordTempSave(): Boolean {
         // 10초 지나지 않았다면 임시저장하지 않음.(임시저장 불러오기 과정에서 20kb 정도 파일로 저장되는 이슈 해결)
-        return if (seconds > 10) {
+        return if (tempSaveCheckTime > 100) {
+            tempSaveCheckTime = 0
             return recordService?.saveTempRecording() == true
         } else {
             false
@@ -138,18 +139,20 @@ class RecordManager(IntentNoti: Intent) : Record {
     val recordTime: State<String> = _recordTime
 
     // timer
-    var seconds = 0
+    private var timeIncrement = 0
+    var tempSaveCheckTime = 0
     private var timerTask: Timer? = null
 
     @OptIn(DelicateCoroutinesApi::class)
     private fun timerStart() = GlobalScope.launch(Dispatchers.IO) {
         // 타이머 실행
         timerTask = timer(period = 100) { // 0.1초 마다 업데이트
-            seconds++
+            timeIncrement++
+            tempSaveCheckTime++
             recordService?.apply { presentationTimeUs += 100000 }
 
-            val formattedSeconds = (seconds / 10 % 60).toString().padStart(2, '0')
-            val formattedMinutes = (seconds / 10 / 60).toString().padStart(2, '0')
+            val formattedSeconds = (timeIncrement / 10 % 60).toString().padStart(2, '0')
+            val formattedMinutes = (timeIncrement / 10 / 60).toString().padStart(2, '0')
 
             _recordTime.value = "$formattedMinutes : $formattedSeconds"
         }
@@ -159,7 +162,7 @@ class RecordManager(IntentNoti: Intent) : Record {
 
     private fun timerStop() {
         timerTask?.cancel()
-        seconds = 0
+        timeIncrement = 0
         _recordTime.value = "00 : 00"
     }
 }
