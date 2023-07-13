@@ -8,7 +8,7 @@ RecordModule.apk - [OneDrive에서 다운로드](https://kumohackr-my.sharepoint
 
 ### 사용한 기술
 - Android kotlin, compose
-- 기본 라이브러리 : MediaRecorder
+- 기본 라이브러리 : AudioRecord, MediaMuxer
 
 ### 최소 Android 버전
 - 안드로이드 6.0 이상 (Android 6 ~ 13 테스트 완료)
@@ -68,7 +68,6 @@ MediaRecorder 을 기존에 사용하고 있었는데,
 참고 - [자료조사(2) - 안드로이드의 오디오를 녹음하는 세 가지 방법](https://techlog.gurucat.net/130)
 
 ## AudioRecord 한계점..
-
 `bufferSize`(샘플레이트, 채널, 오디오포멧) 정도는 설정 가능하지만 기본적으로는 아날로그 파형을 디지털로 변환한 신호를 버퍼로 기록.
 <br>→ PCM 파일로 저장됨.
 <br>→ 이를 헤더부분만 추가시켜서 wav 파일로 간단히 만들 수 있지만 압축되지 않은 이 파일은 파일 크기가 큼.
@@ -90,7 +89,6 @@ Android의 **`MediaMuxer`** 클래스가 지원하는 인코딩 확장자 목�
 기존에도 aac 포맷으로 인코딩 되고, mp3 확장자로 저장하는 방식이라서 기존과 비슷하게 짤 수 있을 듯해서 코드 작성
 
 # 과정(트러블슈팅)
-
 - 2022.12 - mediaRecorder 이용하여 녹취 서비스 생성.
     - mediaRecorder 기능
         - 비트레이트 설정(128kbps)을 하면 자동으로 aac 파일로 인코딩되어 저장됨.
