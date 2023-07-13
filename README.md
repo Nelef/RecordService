@@ -1,7 +1,63 @@
 # 안드로이드 녹음 기능에 대한..
 ### MediaRecorder 과 AudioRecord 사용하여 녹취기능 제작. 차이점 정리.
 
-## 수정중.......
+### 미리보기
+
+### 다운로드
+
+RecordModule.apk
+
+- [OneDrive에서 다운로드](https://kumohackr-my.sharepoint.com/:u:/g/personal/imoneleft_kumoh_ac_kr/EYzrEoepnydNrDfUh6H766UBSAE4RT2jt1CpahcpC2FMdA?e=BpQbE0) / [Synology에서 다운로드](http://gofile.me/76Cd2/8Gi5ZfS0r)
+
+### 사용한 기술
+- Android kotlin, compose
+- 기본 라이브러리 : MediaRecorder
+
+### 최소 Android 버전
+- 안드로이드 6.0 이상 (Android 6 ~ 13 테스트 완료)
+
+### Interface
+```kotlin
+interface Record {
+
+    fun recordStart(
+        context: Context,
+        filePath: String,
+        fileTempPath: String
+    ): Boolean
+
+    fun recordResume(): Boolean
+
+    fun recordPause(): Boolean
+
+    fun recordStop(context: Context): Boolean // 일반 저장(중지)
+
+    fun recordTempSave(): Boolean
+    fun recordTempReStart(): Boolean
+    fun recordCancel(context: Context): Boolean
+    fun recordDestroy()
+}
+```
+
+- recordStart
+    - 녹취 시작
+- recordResume
+    - 녹취 재시작
+- recordPause
+    - 녹취 일시정지
+- recordStop
+    - 녹취 종료(원본 파일, 임시 파일) 저장
+- recordTempSave
+    - 임시저장 완료 - 완료 이후 서버로 임시저장파일 보낸 뒤, 아래 재시작(recordTempReStart)을 하면 됨.
+- recordTempReStart
+    - 임시저장 재시작 - 이어서 새로 녹취(파일 넘버+1 되어 저장됨)[test_001.mp3 → test_002.mp3]
+- recordCancel
+    - 서비스 종료 - 정상 종료(recordDestroy 호출됨)
+- recordDestroy
+    - 서비스 종료 - 급하게 앱 종료 시 사용
+
+### MainActivity에 인터페이스, ui 사용 예제 남겨놓음.
+<img width="1083" alt="스크린샷 2023-07-13 오전 10 39 55" src="https://github.com/Nelef/RecordService/assets/40861980/bb948fcb-23fa-4c7b-af03-e9edf18cab77">
 
 ## MediaRecorder 한계점..
 MediaRecorder 을 기존에 사용하고 있었는데, 
@@ -21,7 +77,7 @@ MediaRecorder 을 기존에 사용하고 있었는데,
 <br>→ 따라서 인코딩해서 m4a, mp3 같은 파일 만들라면 딴거 필요함.
 
 1. LAME MP3 라이브러리 써서 wav → mp3 로 인코딩을 하던가
-2. MediaMuxer 써서 인코딩을 하던가
+2. MediaMuxer 써서 wav → mp3(aac) 로 인코딩을 하던가
 
 LGPL 라이센스라서 상관은 없는데 따로 외부 라이브러리 사용 안해도 되는 2번 방법 채택.
 
@@ -35,7 +91,7 @@ Android의 **`MediaMuxer`** 클래스가 지원하는 인코딩 확장자 목�
 
 기존에도 aac 포맷으로 인코딩 되고, mp3 확장자로 저장하는 방식이라서 기존과 비슷하게 짤 수 있을 듯해서 코드 작성
 
-# 과정
+# 과정(트러블슈팅)
 
 - 2022.12 - mediaRecorder 이용하여 녹취 서비스 생성.
     - mediaRecorder 기능
@@ -44,42 +100,68 @@ Android의 **`MediaMuxer`** 클래스가 지원하는 인코딩 확장자 목�
     - mediaRecorder 한계
         - 안드로이드 7.0 미만 기기는 녹취 일시중지 기능 미지원.
         - 녹음되고 있는 버퍼를 직접 만질 수 없음.
-
+<br><br>
 - 2023.03 - 녹취 중 임시저장 기능을 넣기 위해 버퍼를 만질 수 있는 audioRecord로 변경
 <br>인코딩은 mediaMuxer을 이용.
-<br>[mediaRecorder → audioRecord + mediaMuxer]
+<br>[mediaRecorder -> audioRecord + mediaMuxer]
     - 당시 지원 가능한 Android 버전
         - Android 12, 13
     - 발생한 문제
         - Android 버전에 따른 문제 발생(앱 강제종료)
             - ~~Android 11 이하에서 presentationTimeUs(타임스탬프) 관련 문제 발생~~ → 2023.04 해결
-            - ~~6.0, 7.1.1 파일헤더부분 128kb제한으로 인한 저장 관련 문제 발생~~ → 2023.06 해결
-
+            - ~~6.0, 7.1.1 파일헤더부분 128kb제한으로 인한 저장 관련 문제 발생~~ → 2023.06_1 해결
+<br><br>
 - 2023.04 - Android 11 이하 문제 해결
     - 문제 발생한 코드
         - `mediaMuxer.writeSampleData(audioTrackIndex, outputBuffer, bufferInfo)`
-    - 문제 원인 - mediaMuxer의 타임스탬프가 자동으로 순차대로 찍히지 않아 인코딩 과정에서 에러 발생하며 앱 강제종료됨. (Android 12이상에서는 순차대로 찍혀서 정상작동)
-    - 해결 - bufferInfo에 타임스탬프(presentationTimeUs)정보를 시스템 시간을 이용해 주고 해결.
-        
-        ```kotlin
-        val presentationTimeUs = System.nanoTime() / 1000
-        bufferInfo.presentationTimeUs = presentationTimeUs
-        ```
-        
-
-- 2023.06 - Android 6.0, 7.1.1 에서 문제 해결
+    - 원인
+        - mediaMuxer의 타임스탬프가 자동으로 순차대로 찍히지 않아 인코딩 과정에서 에러 발생하며 앱 강제종료됨.<br>(Android 12이상에서는 순차대로 찍혀서 정상작동)
+    - 해결
+        - bufferInfo에 타임스탬프(presentationTimeUs)정보를 시스템 시간을 이용해 주고 해결.
+            ```kotlin
+            val presentationTimeUs = System.nanoTime() / 1000
+            bufferInfo.presentationTimeUs = presentationTimeUs
+            ```
+            
+    - 추가 문제 발생
+        - ~~일시 정지를 사용 시 파일 재생 시간과 실제 재생 시간이 다른 오류~~ → 2023.06_2 해결
+<br><br>
+- 2023.06_1 - Android 6.0, 7.1.1 에서 파일헤더부분 문제 해결
     - 문제 발생한 코드
         - `mediaMuxer.start()` - 두번째 다시 시작 했을 때 발생.
-    - 문제 원인 - mediaMuxer 과거 버전의 aac 저장 코덱의 헤더가 128bytes 제한이 걸려있어, 다시 시작한 mediaMuxer의 헤더를 쓸 수 없음.
+    - 원인
+        - mediaMuxer 과거 버전의 aac 저장 코덱의 헤더가 128bytes 제한이 걸려있어, 다시 시작한 mediaMuxer의 헤더를 쓸 수 없음.
         - [안드로이드 구글 소스 참고](https://android.googlesource.com/platform/frameworks/av/+/f5943271b08f67939020c45340f2df06a5c39a18%5E%21)
-    - 해결 - `backupFormat: MediaFormat` 포멧을 백업하여 미리 저장해 두고 mediaMuxer의 요소로 주입하여 해결.
-    - 해결 이후 문제 발생 - Android 버전에 따른..
-        - 6.0 - backupFormat 가능 (헤더 128bytes 제한)
-        - 7.1.1 - backupFormat 가능 (헤더 128bytes 제한)
-        - 8.0 - 둘 다 됨
-        - 9.0 - 둘 다 됨
-        - 10 - 둘 다 됨
-        - 11 - originalFormat만 가능 (backupFormat 시 stop 불가)
-        - 12 - originalFormat만 가능 (backupFormat 시 stop 불가)
-        - 13 - originalFormat만 가능 (backupFormat 시 stop 불가)
-    - 추가 해결 - Android 버전별로 분기 처리 하여 해결(9.0 기준으로 짜름)
+    - 해결
+        - `ackupFormat: MediaFormat` 포멧을 백업하여 미리 저장해 두고 mediaMuxer의 요소로 주입하여 해결.
+    - 테스트 시 문제 발생
+        - Android 버전에 따른..
+            - 6.0 - backupFormat 가능 (헤더 128bytes 제한)
+            - 7.1.1 - backupFormat 가능 (헤더 128bytes 제한)
+            - 8.0 - 둘 다 됨
+            - 9.0 - 둘 다 됨
+            - 10 - 둘 다 됨
+            - 11 - originalFormat만 가능 (backupFormat 시 stop 불가)
+            - 12 - originalFormat만 가능 (backupFormat 시 stop 불가)
+            - 13 - originalFormat만 가능 (backupFormat 시 stop 불가)
+    - 추가 해결
+        - Android 버전별로 분기 처리 하여 해결(9.0 기준으로 짜름)
+<br><br>
+- 2023.06_2 - 일시 정지 사용 시 타임스탬프 오류 해결
+    - 문제
+        - 일시 정지 사용 시 저장 된 파일을 읽어보니 파일 재생 시간이 이상함.
+    - 원인
+        - 시스템시간을 타임스탬프로 활용하니 일시 정지 후 재개하면 시스템 시간이 순차대로 올라간게 아니라 끊겼다가 팍 올라가서 파일 재생 시간이 이상해짐.
+    - 해결
+        - 별도 timer 생성하여 presentationTimeUs의 값을 일시 정지 시 멈췄다가, 재개할 시 올라가도록 설정
+    - 추가 문제 발생
+        - ~~Android 13에서 파일 재생 시간과 실제 재생 시간이 다른 오류~~ → 2023.07 해결
+<br><br>
+- 2023.07 - Android 13 에서 타임스탬프 문제
+    - 문제
+        - 녹취 시간이 살짝 다름(10초 녹음 시 11초 타임스탬프..)
+    - 원인
+        - 기본적으로 Android 12 이상 mediaMuxer에서는 타임스탬프를 자동으로 주기 때문에 별도 타임스탬프는 필요하지 않았음.
+        - 근데 하위호환 한다고 강제로 내가 만든 타임스탬프를 주입하니 정확하게 처리되는 mediaMuxer에 비해 달라버려서 발생하는 문제
+    - 해결
+        - 기본적으로 제공되는 mediaMuxer 타임스탬프를 쓰되, 타임스탬프 오류가 발생할 땐 내가 만든 타임스탬프 주입하도록 바꿈.
