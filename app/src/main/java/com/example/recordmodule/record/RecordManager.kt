@@ -96,8 +96,8 @@ class RecordManager(IntentNoti: Intent) : Record {
     }
 
     override fun recordTempSave(): Boolean {
-        // 10초 지나지 않았다면 임시저장하지 않음.(임시저장 불러오기 과정에서 20kb 정도 파일로 저장되는 이슈 해결)
-        return if (tempSaveCheckTime > 100) {
+        // 3초 지나지 않았다면 임시저장하지 않음.(임시저장 불러오기 과정에서 20kb 정도 파일로 저장되는 이슈 해결)
+        return if (tempSaveCheckTime > 30) {
             tempSaveCheckTime = 0
             return recordService?.saveTempRecording() == true
         } else {

@@ -28,7 +28,9 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.core.content.ContextCompat
 import com.example.recordmodule.record.FloatingRecordButton
 import com.example.recordmodule.record.RecordData
+import com.example.recordmodule.record.RecordFileUtils
 import com.example.recordmodule.record.RecordManager
+import com.example.recordmodule.record.RecordState
 import com.example.recordmodule.ui.theme.RecordModuleTheme
 import java.io.File
 
@@ -56,17 +58,25 @@ class MainActivity : ComponentActivity() {
                         horizontalAlignment = Alignment.CenterHorizontally,
                         verticalArrangement = Arrangement.Center
                     ) {
-                        Button(onClick = { recordStart() }) {
+                        Button(enabled = !record.showFloatingRecordButton,
+                            onClick = { recordStart() }) {
                             Text(text = "녹취 서비스 시작")
                         }
-                        Button(onClick = { recordCancel() }) {
+                        Button(
+                            enabled = record.showFloatingRecordButton,
+                            onClick = { recordCancel() }) {
                             Text(text = "녹취 서비스 종료")
                         }
-                        Button(onClick = {
-                            recordTempSave()
-                            recordTempReStart()
-                        }) {
-                            Text(text = "녹취 임시저장")
+                        Button(enabled = (record.recordState.value == RecordState.Recoding)
+                                && (record.tempSaveCheckTime > 30),
+                            onClick = {
+                                recordTempSave()
+                                recordTempReStart()
+                            }) {
+                            var text = "녹취 임시저장 " + (30-record.tempSaveCheckTime)/10 + "초 뒤 가능.."
+                            if(record.tempSaveCheckTime > 30)
+                                text = "녹취 임시저장 하기"
+                            Text(text = text)
                         }
                     }
 
@@ -79,7 +89,8 @@ class MainActivity : ComponentActivity() {
                         onResume = { recordResume() },
                         onPause = { recordPause() },
                         onStop = { recordStop() },
-                        onRecordList = { updateRecordList() }
+                        onRecordList = { updateRecordList(false) },
+                        onRecordList2 = { updateRecordList(true) }
                     )
                 }
             }
@@ -109,7 +120,10 @@ class MainActivity : ComponentActivity() {
     var record = RecordManager(Intent(this, MainActivity::class.java))
 
     fun recordStart() {
-        updateRecordList()
+        RecordFileUtils.delete(File(getExternalFilesDir(null), "record").absolutePath)
+        RecordFileUtils.delete(File(getExternalFilesDir(null), "temp").absolutePath)
+        updateRecordList(true)
+        updateRecordList(false)
         val filePath = generateRecordFilePath(false)
         val fileTempPath = generateRecordFilePath(true)
 
@@ -136,7 +150,8 @@ class MainActivity : ComponentActivity() {
 
     fun recordStop() {
         if (record.recordStop(this)) {
-            updateRecordList()
+            updateRecordList(true)
+            updateRecordList(false)
             Toast.makeText(this, "녹취 저장이 완료되었습니다.", Toast.LENGTH_SHORT).show()
         }
     }
@@ -173,15 +188,21 @@ class MainActivity : ComponentActivity() {
         else File(getExternalFilesDir(null), "temp/test_0_01.mp3").absolutePath
     }
 
-    fun updateRecordList() {
+    fun updateRecordList(isTemp: Boolean) {
         // TODO: recode code 여러개에 대한 처리가 필요함
 
         records.apply {
             clear()
 
-            val recordFiles = File(getExternalFilesDir(null), "record").listFiles { _, name ->
-                name.endsWith(".mp3")
-            } ?: emptyArray()
+            val recordFiles = if (!isTemp) {
+                File(getExternalFilesDir(null), "record").listFiles { _, name ->
+                    name.endsWith(".mp3")
+                } ?: emptyArray()
+            } else {
+                File(getExternalFilesDir(null), "temp").listFiles { _, name ->
+                    name.endsWith(".mp3")
+                } ?: emptyArray()
+            }
 
             val records = recordFiles.map { recordFile ->
                 val retriever = MediaMetadataRetriever()

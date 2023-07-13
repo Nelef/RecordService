@@ -175,6 +175,7 @@ fun FloatingRecordButton(
     onPause: () -> Unit,
     onStop: () -> Unit,
     onRecordList: () -> Unit,
+    onRecordList2: () -> Unit = {},
 ) {
     val density = LocalDensity.current
     var offsetX by remember { mutableStateOf(with(density) { -30.dp.toPx() }) }
@@ -233,6 +234,7 @@ fun FloatingRecordButton(
                         onPause = onPause,
                         onStop = onStop,
                         onRecordList = onRecordList,
+                        onRecordList2 = onRecordList2,
                         onClose = { extended = false },
                         isMainButton = true
                     )
@@ -280,23 +282,23 @@ fun FloatingRecordButton(
             RecordState.Recoding -> {}
             RecordState.None,
             RecordState.Paused -> {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .background(MaterialTheme.colors.background4Color.copy(alpha = 0.5f))
-                        .clickable(
-                            interactionSource = remember { MutableInteractionSource() },
-                            indication = null
-                        ) { }
-                ) {
-                    Column(
-                        modifier = Modifier.fillMaxSize(),
-                        verticalArrangement = Arrangement.Center,
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        Text(text = "진행하려면 녹음을 시작해주세요.", color = Color.White)
-                    }
-                }
+//                Box(
+//                    modifier = Modifier
+//                        .fillMaxSize()
+//                        .background(MaterialTheme.colors.background4Color.copy(alpha = 0.5f))
+//                        .clickable(
+//                            interactionSource = remember { MutableInteractionSource() },
+//                            indication = null
+//                        ) { }
+//                ) {
+//                    Column(
+//                        modifier = Modifier.fillMaxSize(),
+//                        verticalArrangement = Arrangement.Center,
+//                        horizontalAlignment = Alignment.CenterHorizontally
+//                    ) {
+//                        Text(text = "진행하려면 녹음을 시작해주세요.", color = Color.White)
+//                    }
+//                }
             }
         }
     }
@@ -439,10 +441,12 @@ fun MicBubble(
     onPause: () -> Unit,
     onStop: () -> Unit,
     onRecordList: () -> Unit,
+    onRecordList2: () -> Unit = { },
     onClose: () -> Unit = {},
     isMainButton: Boolean = false
 ) {
     var listPopupControl by remember { mutableStateOf(false) }
+    var listPopupControl2 by remember { mutableStateOf(false) }
     var selectedRecordData by remember { mutableStateOf<RecordData?>(null) }
 
     Column {
@@ -460,6 +464,7 @@ fun MicBubble(
                             onClick = {
                                 onRecord()
                                 listPopupControl = false
+                                listPopupControl2 = false
                                 selectedRecordData = null
                             },
                             icon = R.drawable.micon_record,
@@ -563,12 +568,26 @@ fun MicBubble(
                     onClick = {
                         onRecordList()
                         listPopupControl = !listPopupControl
+                        listPopupControl2 = false
                         selectedRecordData = null
                     },
                     enabled = recordState == RecordState.None,
                     icon = R.drawable.micon_list_on,
                     selectedIcon = R.drawable.micon_list_on,
                     text = "목록"
+                )
+                BubbleButton(
+                    selected = listPopupControl2,
+                    onClick = {
+                        onRecordList2()
+                        listPopupControl2 = !listPopupControl2
+                        listPopupControl = false
+                        selectedRecordData = null
+                    },
+                    enabled = recordState == RecordState.None,
+                    icon = R.drawable.micon_list_on,
+                    selectedIcon = R.drawable.micon_list_on,
+                    text = "임시목록"
                 )
                 if (isMainButton) {
                     Spacer(modifier = Modifier.width(12.dp))
@@ -587,6 +606,45 @@ fun MicBubble(
             }
         }
         AnimatedVisibility(listPopupControl) {
+            Column(modifier = Modifier.width(368.dp)) {
+                Spacer(modifier = Modifier.height(8.dp))
+                Bubble(
+                    showSub = true,
+                    shape = RoundedCornerShape(16.dp),
+                    backgroundColor = MaterialTheme.colors.background4Color.copy(alpha = 0.8f),
+                    modifier = Modifier.requiredSizeIn(
+                        minWidth = 368.dp,
+                        maxWidth = 368.dp,
+                        minHeight = 40.dp,
+                        maxHeight = 160.dp
+                    )
+                ) {
+                    if (recordFileList.isEmpty()) {
+                        Text(
+                            text = "녹취된 음성이 없습니다.", style = TextStyle(
+                                color = MaterialTheme.colors.background1Color,
+                                fontSize = 14.sp
+                            )
+                        )
+                    } else {
+                        LazyColumn {
+                            items(items = recordFileList) { item ->
+                                FileItem(file = item, onClick = {
+                                    selectedRecordData = item
+                                })
+                                Divider(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .height(1.dp),
+                                    color = Divider2Color
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        AnimatedVisibility(listPopupControl2) {
             Column(modifier = Modifier.width(368.dp)) {
                 Spacer(modifier = Modifier.height(8.dp))
                 Bubble(
