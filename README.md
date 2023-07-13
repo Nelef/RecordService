@@ -1,4 +1,5 @@
-
+# 버퍼 사용하여 녹취 중 임시 파일 내보내는 안드로이드 녹취 서비스 모듈
+![스크린샷 2023-07-13 오전 9 08 17](https://github.com/Nelef/RecordService/assets/40861980/c46a9362-9f78-4ca1-b98f-e235d7643c90)
 
 ### 미리보기
 ![Screen_Recording_20230713_110943_RecordModule](https://github.com/Nelef/RecordService/assets/40861980/b700cd88-2a4f-446f-a9f4-8c531f006d5d)
