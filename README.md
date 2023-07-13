@@ -122,14 +122,14 @@ Android의 **`MediaMuxer`** 클래스가 지원하는 인코딩 확장자 목�
     - 추가 문제 발생
         - ~~일시 정지를 사용 시 파일 재생 시간과 실제 재생 시간이 다른 오류~~ → 2023.06_2 해결
 <br><br>
-- 2023.06_1 - Android 6.0, 7.1.1 에서 파일헤더부분 문제 해결
+- 2023.06_1 - Android 6.0 ~ 7.1.1 에서 파일헤더부분 문제 해결
     - 문제 발생한 코드
         - `mediaMuxer.start()` - 두번째 다시 시작 했을 때 발생.
     - 원인
-        - mediaMuxer 과거 버전의 aac 저장 코덱의 헤더가 128bytes 제한이 걸려있어, 다시 시작한 mediaMuxer의 헤더를 쓸 수 없음.
-        - [안드로이드 구글 소스 참고](https://android.googlesource.com/platform/frameworks/av/+/f5943271b08f67939020c45340f2df06a5c39a18%5E%21)
+        - 안드로이드 6.0 ~ 7.1.1에 내장되어 있는 mediaMuxer 버전의 aac 저장 코덱의 헤더가 128bytes 제한이 걸려있어, 다시 시작한 mediaMuxer의 헤더를 쓸 수 없음.
+        - 안드로이드 구글 소스 참고 - [https://android.googlesource.com/platform/frameworks/av/+/f5943271b08f67939020c45340f2df06a5c39a18%5E%21](https://android.googlesource.com/platform/frameworks/av/+/f5943271b08f67939020c45340f2df06a5c39a18%5E%21)
     - 해결
-        - `ackupFormat: MediaFormat` 포멧을 백업하여 미리 저장해 두고 mediaMuxer의 요소로 주입하여 해결.
+        - `backupFormat: MediaFormat` 포멧을 백업하여 미리 저장해 두고 mediaMuxer의 요소로 주입하여 해결.
     - 테스트 시 문제 발생
         - Android 버전에 따른..
             - 6.0 - backupFormat 가능 (헤더 128bytes 제한)
