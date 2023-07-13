@@ -1,13 +1,10 @@
-# 안드로이드 녹음 기능에 대한..
-### MediaRecorder 과 AudioRecord 사용하여 녹취기능 제작. 차이점 정리.
+
 
 ### 미리보기
+![Screen_Recording_20230713_110943_RecordModule](https://github.com/Nelef/RecordService/assets/40861980/b700cd88-2a4f-446f-a9f4-8c531f006d5d)
 
 ### 다운로드
-
-RecordModule.apk
-
-- [OneDrive에서 다운로드](https://kumohackr-my.sharepoint.com/:u:/g/personal/imoneleft_kumoh_ac_kr/EYzrEoepnydNrDfUh6H766UBSAE4RT2jt1CpahcpC2FMdA?e=BpQbE0) / [Synology에서 다운로드](http://gofile.me/76Cd2/8Gi5ZfS0r)
+RecordModule.apk - [OneDrive에서 다운로드](https://kumohackr-my.sharepoint.com/:u:/g/personal/imoneleft_kumoh_ac_kr/EYzrEoepnydNrDfUh6H766UBSAE4RT2jt1CpahcpC2FMdA?e=BpQbE0) / [Synology에서 다운로드](http://gofile.me/76Cd2/8Gi5ZfS0r)
 
 ### 사용한 기술
 - Android kotlin, compose
@@ -19,19 +16,14 @@ RecordModule.apk
 ### Interface
 ```kotlin
 interface Record {
-
     fun recordStart(
         context: Context,
         filePath: String,
         fileTempPath: String
     ): Boolean
-
     fun recordResume(): Boolean
-
     fun recordPause(): Boolean
-
     fun recordStop(context: Context): Boolean // 일반 저장(중지)
-
     fun recordTempSave(): Boolean
     fun recordTempReStart(): Boolean
     fun recordCancel(context: Context): Boolean
@@ -39,25 +31,31 @@ interface Record {
 }
 ```
 
-- recordStart
+- recordStart(context, 녹취 저장 위치, 녹취 임시저장 위치)
     - 녹취 시작
-- recordResume
+- recordResume()
     - 녹취 재시작
-- recordPause
+- recordPause()
     - 녹취 일시정지
-- recordStop
+- recordStop(context)
     - 녹취 종료(원본 파일, 임시 파일) 저장
-- recordTempSave
+- recordTempSave()
     - 임시저장 완료 - 완료 이후 서버로 임시저장파일 보낸 뒤, 아래 재시작(recordTempReStart)을 하면 됨.
-- recordTempReStart
+- recordTempReStart()
     - 임시저장 재시작 - 이어서 새로 녹취(파일 넘버+1 되어 저장됨)[test_001.mp3 → test_002.mp3]
-- recordCancel
+- recordCancel(context)
     - 서비스 종료 - 정상 종료(recordDestroy 호출됨)
-- recordDestroy
+- recordDestroy()
     - 서비스 종료 - 급하게 앱 종료 시 사용
 
 ### MainActivity에 인터페이스, ui 사용 예제 남겨놓음.
 <img width="1083" alt="스크린샷 2023-07-13 오전 10 39 55" src="https://github.com/Nelef/RecordService/assets/40861980/bb948fcb-23fa-4c7b-af03-e9edf18cab77">
+
+---
+---
+
+# 안드로이드 녹음 기능에 대한..
+### MediaRecorder 과 AudioRecord 사용하여 녹취기능 제작. 차이점 정리.
 
 ## MediaRecorder 한계점..
 MediaRecorder 을 기존에 사용하고 있었는데, 
