@@ -14,6 +14,9 @@ RecordModule.apk - [OneDrive에서 다운로드](https://kumohackr-my.sharepoint
 ### 최소 Android 버전
 - 안드로이드 6.0 이상 (Android 6 ~ 13 테스트 완료)
 
+### 현재 발견된 버그
+- [2023.07] 없음 
+
 ### Interface
 ```kotlin
 interface Record {
@@ -162,3 +165,6 @@ Android의 **`MediaMuxer`** 클래스가 지원하는 인코딩 확장자 목�
         - 근데 하위호환 한다고 강제로 내가 만든 타임스탬프를 주입하니 정확하게 처리되는 mediaMuxer에 비해 달라버려서 발생하는 문제
     - 해결
         - 기본적으로 제공되는 mediaMuxer 타임스탬프를 쓰되, 타임스탬프 오류가 발생할 땐 내가 만든 타임스탬프 주입하도록 바꿈.
+
+- 2023.07 기준
+    - 안드로이드 6.0 ~ 13 문제 없음.
